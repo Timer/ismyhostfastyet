@@ -1,5 +1,5 @@
 # Update this monthly.
-DECLARE QUERY_DATE DATE DEFAULT '2024-10-01';
+DECLARE QUERY_DATE DATE DEFAULT '2024-11-01';
 
 # Add/edit platforms in alphabetical order here.
 DECLARE PLATFORMS ARRAY<STRUCT<regex STRING, name STRING>> DEFAULT [
@@ -10,6 +10,7 @@ DECLARE PLATFORMS ARRAY<STRUCT<regex STRING, name STRING>> DEFAULT [
   ('wpvip.com/careers', 'Automattic'),
   ('wordpress.com', 'Automattic'),
   ('a9130478a60e5f9135f765b23f26593b', 'Automattic'),
+  ('cf-ray', 'Cloudflare'),
   ('flywheel', 'Flywheel'),
   ('framer/', 'Framer'),
   ('fly-request-id', 'Fly.io'),
