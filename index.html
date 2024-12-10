@@ -85,7 +85,9 @@
           white-space: nowrap;
         }
       }
-      @media ((-webkit-min-device-pixel-ratio: 1.5), (min-resolution: 144dpi), (min-resolution: 1.5dppx)) {
+      @media (-webkit-min-device-pixel-ratio: 1.5),
+             (min-resolution: 144dpi),
+             (min-resolution: 1.5dppx) {
         p, td {
           font-weight: 300;
         }
@@ -132,6 +134,13 @@
                 <option value="platform">Host</option>
                 <option value="client">Client</option>
                 <option value="n">Websites</option>
+              </select>
+            </label>
+            <label>
+              View
+              <select name="cloudflare">
+                <option value="without" selected>Without Cloudflare</option>
+                <option value="with">With Cloudflare</option>
               </select>
             </label>
           </form>
@@ -362,8 +371,44 @@ function initSortHandler() {
   });
 }
 
-function fetchData(sortField) {
-  fetch('ttfb.json').then(r => r.json()).then(r => {
+function getCloudflarePreference() {
+  const cloudflare = new URL(location.href).searchParams.get('cloudflare');
+  
+  const isValid = !!document.querySelector(`#filter select[name="cloudflare"] option[value="${cloudflare}"]`);
+  if (!isValid) {
+    return 'without';
+  }
+  
+  return cloudflare;
+}
+
+function setDefaultFilters(sortField, cloudflarePreference) {
+  document.querySelector('#filter select[name="sort"]').value = sortField;
+  document.querySelector('#filter select[name="cloudflare"]').value = cloudflarePreference;
+}
+
+function initFilterHandlers() {
+  document.getElementById('filter').addEventListener('change', (e) => {
+    const sortField = document.querySelector('#filter select[name="sort"]').value;
+    const cloudflare = document.querySelector('#filter select[name="cloudflare"]').value;
+    
+    if (e.target.name === 'sort') {
+      gtag('event', 'sort', {'event_category': 'engagement', 'event_label': sortField});
+    } else if (e.target.name === 'cloudflare') {
+      gtag('event', 'cloudflare', {'event_category': 'engagement', 'event_label': cloudflare});
+    }
+    
+    updateUrlField('sort', sortField);
+    updateUrlField('cloudflare', cloudflare);
+    
+    fetchData(sortField, cloudflare);
+  });
+}
+
+function fetchData(sortField, cloudflare) {
+  const file = cloudflare === 'with' ? 'ttfb-combined.json' : 'ttfb.json';
+  
+  fetch(file).then(r => r.json()).then(r => {
     window.data = r;
 
     const results = document.getElementById('results');
@@ -374,14 +419,16 @@ function fetchData(sortField) {
 
 function init() {
   const sortField = getSortField();
-  setDefaultSort(sortField);
-  initSortHandler();
+  const cloudflarePreference = getCloudflarePreference();
+  
+  setDefaultFilters(sortField, cloudflarePreference);
+  initFilterHandlers();
 
   // Display the placeholder data.
   setPlaceholderData();
   updateResultsTable(sortResults(window.data, sortField));
 
-  fetchData(sortField);
+  fetchData(sortField, cloudflarePreference);
 }
 
 init();
