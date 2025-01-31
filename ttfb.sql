@@ -101,12 +101,29 @@ detected_platforms AS (
   JOIN (
     SELECT
       client,
-      root_page AS url,
-      REGEXP_EXTRACT(LOWER(CONCAT(IFNULL(respOtherHeaders, ''), IFNULL(resp_x_powered_by, ''), IFNULL(resp_via, ''), IFNULL(resp_server, ''))), (SELECT pattern FROM platform_regex)) AS regex
-    FROM
-      requests)
-  USING
-    (regex)
+      url,
+      regex
+    FROM (
+      SELECT
+        client,
+        root_page AS url,
+        REGEXP_EXTRACT_ALL(LOWER(respOtherHeaders), (SELECT pattern FROM platform_regex)) AS matches1,
+        REGEXP_EXTRACT_ALL(LOWER(IFNULL(resp_x_powered_by, '')), (SELECT pattern FROM platform_regex)) AS matches2,
+        REGEXP_EXTRACT_ALL(LOWER(IFNULL(resp_via, '')), (SELECT pattern FROM platform_regex)) AS matches3,
+        REGEXP_EXTRACT_ALL(LOWER(IFNULL(resp_server, '')), (SELECT pattern FROM platform_regex)) AS matches4
+      FROM requests
+    )
+    CROSS JOIN UNNEST(
+      ARRAY_CONCAT(
+        matches1,
+        matches2,
+        matches3,
+        matches4
+      )
+    ) AS regex
+    WHERE regex IS NOT NULL
+  )
+  USING (regex)
 ),
 
 url_platforms AS (
