@@ -373,7 +373,7 @@ function fetchData(sortField) {
 
     const results = document.getElementById('results');
     results.classList.remove('loading');
-    updateResultsTable(sortResults(r, sortField));
+    updateResultsTable(sortResults(window.data, sortField));
   });
 }
 
