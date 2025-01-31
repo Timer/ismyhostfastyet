@@ -136,6 +136,14 @@
                 <option value="n">Websites</option>
               </select>
             </label>
+            <label style="margin-left: 20px;">
+              Client
+              <select name="client">
+                <option value="all">All</option>
+                <option value="desktop" selected>Desktop</option>
+                <option value="mobile">Mobile</option>
+              </select>
+            </label>
           </form>
 
           <table>
@@ -328,6 +336,15 @@ function getSortField() {
   return sortField;
 }
 
+function getClientFilter() {
+  const clientFilter = new URL(location.href).searchParams.get('client');
+  const isValid = !!document.querySelector(`#filter option[value="${clientFilter}"]`);
+  if (!isValid) {
+    return 'desktop';
+  }
+  return clientFilter;
+}
+
 function updateUrlField(key, value) {
   const url = new URL(location);
   url.searchParams.set(key, value);
@@ -352,24 +369,33 @@ function setPlaceholderData() {
 }
 
 function setDefaultSort(sortField) {
-  document.querySelector('#filter select').value = sortField;
+  document.querySelector('#filter select[name="sort"]').value = sortField;
 }
 
 function initFilterHandlers() {
   document.getElementById('filter').addEventListener('change', (e) => {
-    const sortField = e.target.value;
-    gtag('event', 'sort', {'event_category': 'engagement', 'event_label': sortField});
+    const form = e.target.form;
+    const sortField = form.sort.value;
+    const clientFilter = form.client.value;
+
+    gtag('event', e.target.name, {'event_category': 'engagement', 'event_label': e.target.value});
     updateUrlField('sort', sortField);
-    fetchData(sortField);
+    updateUrlField('client', clientFilter);
+    fetchData(sortField, clientFilter);
   });
 }
 
-function fetchData(sortField) {
+function fetchData(sortField, clientFilter) {
   fetch('ttfb.json').then(r => r.json()).then(r => {
     window.data = r.map(p => ({
       ...p,
       platform: JSON.parse(p.platform).join(', ')
     }));
+
+    // Filter by client if needed
+    if (clientFilter !== 'all') {
+      window.data = window.data.filter(item => item.client.toLowerCase() === clientFilter.toLowerCase());
+    }
 
     const results = document.getElementById('results');
     results.classList.remove('loading');
@@ -379,14 +405,24 @@ function fetchData(sortField) {
 
 function init() {
   const sortField = getSortField();
-  document.querySelector('#filter select').value = sortField;
+  const clientFilter = getClientFilter();
+
+  // Set initial URL if no parameters exist
+  if (!location.search) {
+    updateUrlField('sort', sortField);
+    updateUrlField('client', clientFilter);
+  }
+
+  document.querySelector('#filter select[name="sort"]').value = sortField;
+  document.querySelector('#filter select[name="client"]').value = clientFilter;
+
   initFilterHandlers();
 
   // Display the placeholder data.
   setPlaceholderData();
   updateResultsTable(sortResults(window.data, sortField));
 
-  fetchData(sortField);
+  fetchData(sortField, clientFilter);
 }
 
 init();
