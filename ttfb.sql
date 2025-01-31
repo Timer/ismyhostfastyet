@@ -4,12 +4,16 @@ DECLARE QUERY_DATE DATE DEFAULT '2024-11-01';
 # Add/edit platforms in alphabetical order here.
 DECLARE PLATFORMS ARRAY<STRUCT<regex STRING, name STRING>> DEFAULT [
   ('awex', '000webhost'),
+  ('akamai', 'Akamai'),
+  ('x-ak-protocol', 'Akamai'),
   ('x-ah-environment', 'Acquia'),
   ('alproxy', 'AlwaysData'),
   ('automattic.com/work-with-us', 'Automattic'),
   ('wpvip.com/careers', 'Automattic'),
   ('wordpress.com', 'Automattic'),
   ('a9130478a60e5f9135f765b23f26593b', 'Automattic'),
+  ('x-azure-ref', 'Azure'),
+  ('X-MSEdge-Ref', 'Azure'),
   ('cf-ray', 'Cloudflare'),
   ('flywheel', 'Flywheel'),
   ('framer/', 'Framer'),
@@ -22,6 +26,7 @@ DECLARE PLATFORMS ARRAY<STRUCT<regex STRING, name STRING>> DEFAULT [
   ('x-kinsta-cache', 'Kinsta'),
   ('x-lw-cache', 'Liquid Web'),
   ('netlify', 'Netlify'),
+  ('x-opennext', 'OpenNext'),
   ('x-pantheon-styx-hostname', 'Pantheon'),
   ('seravo', 'Seravo'),
   ('x-shopify-stage', 'Shopify'),
@@ -129,6 +134,6 @@ USING
 GROUP BY
   platform_array,
   client
-HAVING n >= 16
+HAVING n >= 10
 ORDER BY
   fast DESC
