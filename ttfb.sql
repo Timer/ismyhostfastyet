@@ -151,6 +151,6 @@ USING
 GROUP BY
   platform_array,
   client
-HAVING n >= 10
+HAVING n >= 100
 ORDER BY
   fast DESC
