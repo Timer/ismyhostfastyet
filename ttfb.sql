@@ -15,6 +15,7 @@ DECLARE PLATFORMS ARRAY<STRUCT<regex STRING, name STRING>> DEFAULT [
   ('x-azure-ref', 'Azure'),
   ('X-MSEdge-Ref', 'Azure'),
   ('cf-ray', 'Cloudflare'),
+  ('x-amz-cf-id', 'AWS CloudFront'),
   ('flywheel', 'Flywheel'),
   ('framer/', 'Framer'),
   ('fly-request-id', 'Fly.io'),
