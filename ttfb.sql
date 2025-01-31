@@ -102,24 +102,33 @@ detected_platforms AS (
       requests)
   USING
     (regex)
+),
+
+url_platforms AS (
+  SELECT
+    client,
+    url,
+    ARRAY_AGG(DISTINCT platform ORDER BY platform) as platform_array
+  FROM detected_platforms
+  GROUP BY client, url
 )
 
-
-SELECT DISTINCT
-  platform,
+SELECT
+  TO_JSON_STRING(platform_array) as platform,
   client,
   COUNT(DISTINCT url) AS n,
   COUNT(DISTINCT IF(ttfb = 'Good', url, NULL)) / COUNT(DISTINCT url) AS fast,
   COUNT(DISTINCT IF(ttfb = 'Needs Improvement', url, NULL)) / COUNT(DISTINCT url) AS avg,
   COUNT(DISTINCT IF(ttfb = 'Poor', url, NULL)) / COUNT(DISTINCT url) AS slow
 FROM
-  detected_platforms
+  url_platforms
 JOIN
   crux
 USING
   (client, url)
 GROUP BY
-  platform,
+  platform_array,
   client
+HAVING n >= 16
 ORDER BY
   fast DESC

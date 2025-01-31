@@ -136,13 +136,6 @@
                 <option value="n">Websites</option>
               </select>
             </label>
-            <label>
-              View
-              <select name="cloudflare">
-                <option value="without" selected>Without Cloudflare</option>
-                <option value="with">With Cloudflare</option>
-              </select>
-            </label>
           </form>
 
           <table>
@@ -326,12 +319,12 @@ function getRandomDistribution() {
 
 function getSortField() {
   const sortField = new URL(location.href).searchParams.get('sort');
-  
+
   const isValid = !!document.querySelector(`#filter option[value="${sortField}"]`);
   if (!isValid) {
     return 'fast';
   }
-  
+
   return sortField;
 }
 
@@ -362,54 +355,21 @@ function setDefaultSort(sortField) {
   document.querySelector('#filter select').value = sortField;
 }
 
-function initSortHandler() {
-  document.getElementById('filter').addEventListener('change', (e) => {
-    const field = e.target.value;
-    gtag('event', 'sort', {'event_category': 'engagement', 'event_label': field});
-    updateResultsTable(sortResults(window.data, field));
-    updateUrlField('sort', field);
-  });
-}
-
-function getCloudflarePreference() {
-  const cloudflare = new URL(location.href).searchParams.get('cloudflare');
-  
-  const isValid = !!document.querySelector(`#filter select[name="cloudflare"] option[value="${cloudflare}"]`);
-  if (!isValid) {
-    return 'without';
-  }
-  
-  return cloudflare;
-}
-
-function setDefaultFilters(sortField, cloudflarePreference) {
-  document.querySelector('#filter select[name="sort"]').value = sortField;
-  document.querySelector('#filter select[name="cloudflare"]').value = cloudflarePreference;
-}
-
 function initFilterHandlers() {
   document.getElementById('filter').addEventListener('change', (e) => {
-    const sortField = document.querySelector('#filter select[name="sort"]').value;
-    const cloudflare = document.querySelector('#filter select[name="cloudflare"]').value;
-    
-    if (e.target.name === 'sort') {
-      gtag('event', 'sort', {'event_category': 'engagement', 'event_label': sortField});
-    } else if (e.target.name === 'cloudflare') {
-      gtag('event', 'cloudflare', {'event_category': 'engagement', 'event_label': cloudflare});
-    }
-    
+    const sortField = e.target.value;
+    gtag('event', 'sort', {'event_category': 'engagement', 'event_label': sortField});
     updateUrlField('sort', sortField);
-    updateUrlField('cloudflare', cloudflare);
-    
-    fetchData(sortField, cloudflare);
+    fetchData(sortField);
   });
 }
 
-function fetchData(sortField, cloudflare) {
-  const file = cloudflare === 'with' ? 'ttfb-combined.json' : 'ttfb.json';
-  
-  fetch(file).then(r => r.json()).then(r => {
-    window.data = r;
+function fetchData(sortField) {
+  fetch('ttfb.json').then(r => r.json()).then(r => {
+    window.data = r.map(p => ({
+      ...p,
+      platform: JSON.parse(p.platform).join(', ')
+    }));
 
     const results = document.getElementById('results');
     results.classList.remove('loading');
@@ -419,16 +379,14 @@ function fetchData(sortField, cloudflare) {
 
 function init() {
   const sortField = getSortField();
-  const cloudflarePreference = getCloudflarePreference();
-  
-  setDefaultFilters(sortField, cloudflarePreference);
+  document.querySelector('#filter select').value = sortField;
   initFilterHandlers();
 
   // Display the placeholder data.
   setPlaceholderData();
   updateResultsTable(sortResults(window.data, sortField));
 
-  fetchData(sortField, cloudflarePreference);
+  fetchData(sortField);
 }
 
 init();
