@@ -5,14 +5,6 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Is my host fast yet?</title>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-22381566-4"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'UA-22381566-4');
-    </script>
     <link href="https://fonts.googleapis.com/css?family=Chivo:900&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="style.css">
     <style>
@@ -230,9 +222,9 @@
           </p>
 
           <p>
-            Would you like to see a hosting provider included in this report that’s currently
+            Would you like to see a hosting provider included in this report that's currently
             not on the list? Please <a href="https://github.com/rviscomi/ismyhostfastyet/blob/master/README.md#methodology">read more about our methodology</a>
-            and <a href="https://github.com/rviscomi/ismyhostfastyet/">join us on GitHub</a> — we’d appreciate your help to
+            and <a href="https://github.com/rviscomi/ismyhostfastyet/">join us on GitHub</a> — we'd appreciate your help to
             allow us to expand coverage of this report!
           </p>
 
@@ -378,7 +370,6 @@ function initFilterHandlers() {
     const sortField = form.sort.value;
     const clientFilter = form.client.value;
 
-    gtag('event', e.target.name, {'event_category': 'engagement', 'event_label': e.target.value});
     updateUrlField('sort', sortField);
     updateUrlField('client', clientFilter);
     fetchData(sortField, clientFilter);
@@ -428,6 +419,5 @@ function init() {
 init();
 
     </script>
-    <script type="module" src="vitals.js"></script>
   </body>
 </html>
