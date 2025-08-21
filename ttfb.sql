@@ -1,5 +1,5 @@
 # Update this monthly.
-DECLARE QUERY_DATE DATE DEFAULT '2024-11-01';
+DECLARE QUERY_DATE DATE DEFAULT '2027-07-01';
 
 # Add/edit platforms in alphabetical order here.
 DECLARE PLATFORMS ARRAY<STRUCT<regex STRING, name STRING>> DEFAULT [
@@ -47,7 +47,6 @@ DECLARE PLATFORMS ARRAY<STRUCT<regex STRING, name STRING>> DEFAULT [
   ('zoneos', 'Zone.eu')
 ];
 
-
 WITH crux AS (
   SELECT
     IF(device = 'desktop', 'desktop', 'mobile') AS client,
@@ -68,63 +67,60 @@ WITH crux AS (
 
 requests AS (
   SELECT
-    client,
-    root_page,
-    JSON_VALUE(summary, '$.respOtherHeaders') AS respOtherHeaders,
-    JSON_VALUE(summary, '$.resp_x_powered_by') AS resp_x_powered_by,
-    JSON_VALUE(summary, '$.resp_via') AS resp_via,
-    JSON_VALUE(summary, '$.resp_server') AS resp_server
+    r.client,
+    r.root_page,
+    -- all headers except the ones broken out below (name:value)
+    STRING_AGG(
+      IF(LOWER(h.name) NOT IN ('x-powered-by','via','server'),
+         CONCAT(h.name, ':', IFNULL(h.value,'')),
+         NULL
+      ),
+      ' || '
+    ) AS respOtherHeaders,
+    -- specific headers as separate fields
+    STRING_AGG(IF(LOWER(h.name)='x-powered-by', h.value, NULL), ' || ') AS resp_x_powered_by,
+    STRING_AGG(IF(LOWER(h.name)='via',         h.value, NULL), ' || ') AS resp_via,
+    STRING_AGG(IF(LOWER(h.name)='server',      h.value, NULL), ' || ') AS resp_server
   FROM
-    `httparchive.all.requests`
+    `httparchive.crawl.requests` AS r,
+    UNNEST(r.response_headers) AS h
   WHERE
-    date = QUERY_DATE AND
-    is_main_document
+    r.date = QUERY_DATE
+    AND r.is_main_document
+  GROUP BY
+    r.client, r.root_page
 ),
 
 platform_regex AS (
   SELECT
     STRING_AGG(
-      # Escape special chars
       REGEXP_REPLACE(regex, r'([\.\*\+\?\|\(\)\[\]\{\}\^\$])', r'\\\1'),
       r'|'
     ) AS pattern
-  FROM
-    UNNEST(PLATFORMS)
+  FROM UNNEST(PLATFORMS)
 ),
 
 detected_platforms AS (
-  SELECT
-    client,
-    url,
-    name AS platform
-  FROM
-    UNNEST(PLATFORMS)
-  JOIN (
+  WITH m AS (
     SELECT
       client,
-      url,
-      regex
-    FROM (
-      SELECT
-        client,
-        root_page AS url,
-        REGEXP_EXTRACT_ALL(LOWER(respOtherHeaders), (SELECT pattern FROM platform_regex)) AS matches1,
-        REGEXP_EXTRACT_ALL(LOWER(IFNULL(resp_x_powered_by, '')), (SELECT pattern FROM platform_regex)) AS matches2,
-        REGEXP_EXTRACT_ALL(LOWER(IFNULL(resp_via, '')), (SELECT pattern FROM platform_regex)) AS matches3,
-        REGEXP_EXTRACT_ALL(LOWER(IFNULL(resp_server, '')), (SELECT pattern FROM platform_regex)) AS matches4
-      FROM requests
-    )
-    CROSS JOIN UNNEST(
+      root_page AS url,
       ARRAY_CONCAT(
-        matches1,
-        matches2,
-        matches3,
-        matches4
-      )
-    ) AS regex
-    WHERE regex IS NOT NULL
+        REGEXP_EXTRACT_ALL(LOWER(respOtherHeaders), (SELECT pattern FROM platform_regex)),
+        REGEXP_EXTRACT_ALL(LOWER(IFNULL(resp_x_powered_by, '')), (SELECT pattern FROM platform_regex)),
+        REGEXP_EXTRACT_ALL(LOWER(IFNULL(resp_via, '')), (SELECT pattern FROM platform_regex)),
+        REGEXP_EXTRACT_ALL(LOWER(IFNULL(resp_server, '')), (SELECT pattern FROM platform_regex))
+      ) AS matches
+    FROM requests
   )
-  USING (regex)
+  SELECT
+    m.client,
+    m.url,
+    p.name AS platform
+  FROM m
+  CROSS JOIN UNNEST(m.matches) AS match
+  JOIN UNNEST(PLATFORMS) AS p
+    ON LOWER(p.regex) = match
 ),
 
 url_platforms AS (
