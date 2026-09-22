@@ -116,7 +116,15 @@
         <section>
           <h2>Leaderboard:
             <select id="month-select" name="month" style="font-size: inherit; font-family: inherit; border: 1px solid #ccc; padding: 2px 4px; margin: 0 4px;">
-              <option value="apr-2026" selected>Apr 2026</option>
+              <option value="aug-2026" selected>Aug 2026</option>
+              <option value="aug-2026-us-only">Aug 2026 (US only)</option>
+              <option value="jul-2026">Jul 2026</option>
+              <option value="jul-2026-us-only">Jul 2026 (US only)</option>
+              <option value="jun-2026">Jun 2026</option>
+              <option value="jun-2026-us-only">Jun 2026 (US only)</option>
+              <option value="may-2026">May 2026</option>
+              <option value="may-2026-us-only">May 2026 (US only)</option>
+              <option value="apr-2026">Apr 2026</option>
               <option value="apr-2026-us-only">Apr 2026 (US only)</option>
               <option value="feb-2026">Feb 2026</option>
               <option value="feb-2026-us-only">Feb 2026 (US only)</option>
@@ -150,6 +158,11 @@
               </select>
             </label>
           </form>
+
+          <p id="data-note" role="status" hidden>
+            Some rows in this source dataset have Fast, Average, and Slow percentages that total more than 100%.
+            Values are shown as supplied.
+          </p>
 
           <table>
              <thead>
@@ -422,6 +435,10 @@ function fetchData(sortField, clientFilter, month) {
     if (clientFilter !== 'all') {
       window.data = window.data.filter(item => item.client.toLowerCase() === clientFilter.toLowerCase());
     }
+
+    document.getElementById('data-note').hidden = !window.data.some(item =>
+      Number(item.fast) + Number(item.avg) + Number(item.slow) > 1.000001
+    );
 
     const results = document.getElementById('results');
     results.classList.remove('loading');
